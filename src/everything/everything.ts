@@ -41,6 +41,10 @@ const EchoSchema = z.object({
   message: z.string().describe("Message to echo"),
 });
 
+const EchoJsonSchema = z.object({
+  jsonObj: z.object({}).passthrough(),
+});
+
 const AddSchema = z.object({
   a: z.number().describe("First number"),
   b: z.number().describe("Second number"),
@@ -124,6 +128,7 @@ const StructuredContentSchema = {
 
 enum ToolName {
   ECHO = "echo",
+  ECHO_JSON = "echoJSON",
   ADD = "add",
   LONG_RUNNING_OPERATION = "longRunningOperation",
   PRINT_ENV = "printEnv",
@@ -474,6 +479,11 @@ export const createServer = () => {
         inputSchema: zodToJsonSchema(EchoSchema) as ToolInput,
       },
       {
+        name: ToolName.ECHO_JSON,
+        description: "Echoes back the input JSON",
+        inputSchema: zodToJsonSchema(EchoJsonSchema) as ToolInput,
+      },
+      {
         name: ToolName.ADD,
         description: "Adds two numbers",
         inputSchema: zodToJsonSchema(AddSchema) as ToolInput,
@@ -548,6 +558,13 @@ export const createServer = () => {
       const validatedArgs = EchoSchema.parse(args);
       return {
         content: [{ type: "text", text: `Echo: ${validatedArgs.message}` }],
+      };
+    }
+
+    if (name === ToolName.ECHO_JSON) {
+      const validatedArgs = EchoJsonSchema.parse(args);
+      return {
+        content: [{ type: "text", text: `Echo: ${JSON.stringify(validatedArgs.jsonObj, null, 2)}` }],
       };
     }
 
